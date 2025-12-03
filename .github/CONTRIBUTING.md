@@ -1,81 +1,149 @@
-# 🤝 Contributing to ContentFetch-AI-Content-Downloader-MCP-Server
+# Contributing to AgentData-WebContent-Ingestion-Service-NodeJS
 
-As the Apex Technical Authority, we welcome contributions that adhere to our FAANG-level engineering standards. This repository represents a high-velocity, zero-defect product designed for mission-critical AI agent integration.
+Welcome, esteemed developer! We appreciate your interest in contributing to `AgentData-WebContent-Ingestion-Service-NodeJS`. This high-performance NodeJS service is engineered with TypeScript and Vite to provide reliable, server-side web content fetching and persistent storage for advanced AI agents. Your contributions help us maintain and extend this critical component for the AI ecosystem.
 
-By contributing, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
+By participating in this project, you agree to abide by our [Code of Conduct](https://github.com/chirag127/AgentData-WebContent-Ingestion-Service-NodeJS/blob/main/CODE_OF_CONDUCT.md).
 
-## 1. Governance and Workflow
+## How Can I Contribute?
 
-We utilize the standard GitHub Flow coupled with rigorous architectural review.
+There are several ways you can contribute to this project:
 
-### Before You Start
+### Reporting Bugs
 
-1.  **Open an Issue:** For any major feature, complex refactoring, or bug fix, first search existing issues. If none exist, open a new one to discuss the scope and architectural implications with the core team.
-2.  **Assign Ownership:** Clearly indicate if you intend to implement the solution.
-3.  **DCO Sign-off:** All commits must be signed off, agreeing to the Developer Certificate of Origin (DCO). Use `git commit -s`.
+Encountered an issue? We appreciate detailed bug reports to help us improve.
+1.  Check the [issue tracker](https://github.com/chirag127/AgentData-WebContent-Ingestion-Service-NodeJS/issues) to see if the bug has already been reported.
+2.  If not, open a new issue using our [Bug Report Template](https://github.com/chirag127/AgentData-WebContent-Ingestion-Service-NodeJS/blob/main/.github/ISSUE_TEMPLATE/bug_report.md).
+3.  Provide a clear, concise description of the bug, steps to reproduce it, expected behavior, and actual behavior. Include screenshots or error messages if applicable.
 
-### Development Steps
+### Suggesting Enhancements
 
-1.  **Fork:** Fork the repository to your own namespace.
-2.  **Clone:**
+Have an idea for a new feature or an improvement to existing functionality?
+1.  Check the [issue tracker](https://github.com/chirag127/AgentData-WebContent-Ingestion-Service-NodeJS/issues) for similar suggestions.
+2.  If your idea is new, open a new issue. Clearly describe the enhancement, its potential benefits, and any technical considerations.
+
+### Submitting Pull Requests
+
+Ready to contribute code? Follow these steps to ensure a smooth submission process:
+
+1.  **Fork the Repository:** Start by forking `AgentData-WebContent-Ingestion-Service-NodeJS` to your GitHub account.
+2.  **Clone Your Fork:**
     bash
-    git clone https://github.com/<your-username>/ContentFetch-AI-Content-Downloader-MCP-Server.git
-    cd ContentFetch-AI-Content-Downloader-MCP-Server
+    git clone https://github.com/YOUR_USERNAME/AgentData-WebContent-Ingestion-Service-NodeJS.git
+    cd AgentData-WebContent-Ingestion-Service-NodeJS
     
-3.  **Install Dependencies (Using pnpm):**
-    We mandate `pnpm` for efficient dependency management and optimal build times.
+3.  **Create a New Branch:**
     bash
-    npm install -g pnpm  # Install pnpm if necessary
-    pnpm install
+    git checkout -b feature/your-feature-name-or-fix/your-fix-name
     
-4.  **Create a Branch:** Name your branch descriptively (e.g., `feature/add-claude-3-5-support`, `fix/url-encoding-bug`).
+    (e.g., `feature/add-api-key-auth` or `fix/connection-timeout-bug`)
+4.  **Make Your Changes:** Implement your feature or fix. Ensure your code adheres to our architectural principles and coding standards.
+
+## Getting Started: Local Development Setup
+
+To get your local development environment up and running:
+
+### Prerequisites
+
+*   Node.js (LTS version, currently 20.x or higher)
+*   npm or yarn (npm is recommended for consistency)
+*   Git
+
+### Installation
+
+1.  **Install Dependencies:**
     bash
-    git checkout -b feature/my-new-function
+    npm install
+    # or yarn install
+    
+2.  **Run Development Server:**
+    bash
+    npm run dev
+    # or yarn dev
+    
+    This will typically start a development server or a watcher for your TypeScript code, depending on the project's Vite configuration for the backend service.
+
+3.  **Run Tests:**
+    bash
+    npm test
+    # or yarn test
     
 
-## 2. Development Standards (The Standard of Precision)
+## Development Workflow
 
-### A. Environment and Tooling
+### Branching Strategy
 
-| Standard | Tool | Command | Description |
-| :--- | :--- | :--- | :--- |
-| **Formatting & Linting** | Biome | `pnpm run format` / `pnpm run lint` | Ensures zero-drift code style and high performance. |
-| **Testing Framework** | Vitest | `pnpm run test` | For unit, integration, and contract testing of MCP endpoints. |
-| **Type Checking** | TypeScript (Strict) | `pnpm run typecheck` | Mandatory full type-safety across all components. |
-| **Code Execution** | Node.js (v20+) | `pnpm run start` | Executes the core Content Fetch server. |
+We follow a simplified [GitHub Flow](https://docs.github.com/en/get-started/quickstart/github-flow):
+*   `main` is always deployable.
+*   Feature branches are created from `main`.
+*   Pull Requests merge back into `main`.
 
-### B. Architectural Principles
+### Commit Guidelines
 
-All code must strictly adhere to the following principles defined in `AGENTS.md`:
+Please adhere to the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/) for your commit messages. This helps with automatic changelog generation and semantic versioning.
+Examples:
+*   `feat: add support for new content source API`
+*   `fix(ingestion): resolve data parsing error for malformed HTML`
+*   `docs: update contributing guidelines`
+*   `refactor(storage): optimize database indexing for retrieval`
 
-*   **SOLID:** Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion.
-*   **DRY:** Don't Repeat Yourself.
-*   **Architectural Pattern:** Modular Monolith / Microservice Communication Protocol (MCP). Ensure clear segregation between the content fetching mechanism, the AI agent integration layer, and the HTTP transport layer.
-*   **Error Handling:** All asynchronous operations must use robust `try...catch` blocks or explicit error wrappers, ensuring the MCP response always contains a defined `error` structure on failure.
+### Code Style and Linting
 
-## 3. Pull Request Submission
+We enforce strict code style and linting using **Biome**. This ensures code consistency and catches potential issues early.
+*   **Lint & Format Check:**
+    bash
+    npm run lint
+    # or yarn lint
+    
+*   **Auto-Format & Fix:**
+    bash
+    npm run format
+    # or yarn format
+    
+    Please ensure your code passes all linting and formatting checks before submitting a PR.
 
-When you are ready to submit your code for review, ensure the following checklist is completed:
+### Testing
 
-1.  **Self-Review:** Review your own code carefully. Did you remove all debugging artifacts (`console.log`, `debugger`)?
-2.  **Tests:** New features must have comprehensive unit tests (`test/`). Bug fixes must include a regression test that fails without the fix.
-3.  **Documentation:** Update the function comments (JSDoc) for any new exported functions or classes.
-4.  **Clean History:** Squash unnecessary commits into a logical narrative. Use conventional commit messages (`feat:`, `fix:`, `docs:`).
-5.  **Target Branch:** Ensure your PR targets the `main` branch.
+All new features and bug fixes **must** be accompanied by comprehensive tests. We use **Vitest** for unit and integration testing. If applicable (for any E2E scenarios or public API testing), **Playwright** is utilized.
+*   **Run All Tests:**
+    bash
+    npm test
+    # or yarn test
+    
+*   **Run Tests with Coverage:**
+    bash
+    npm test -- --coverage
+    # or yarn test --coverage
+    
 
-### 📜 PR Template Details
+## Pull Request Guidelines
 
-Fill out the provided [Pull Request Template](PULL_REQUEST_TEMPLATE.md) completely, linking back to the relevant issues (e.g., `Closes #123`).
+Before submitting your pull request, please ensure:
 
-## 4. Security Disclosure
+1.  **Atomic Changes:** Keep your PRs focused on a single feature or bug fix.
+2.  **Descriptive Title & Body:** Use our [Pull Request Template](https://github.com/chirag127/AgentData-WebContent-Ingestion-Service-NodeJS/blob/main/.github/PULL_REQUEST_TEMPLATE.md) and provide a clear, concise description of your changes.
+3.  **Tests Pass:** All unit and integration tests (and E2E tests if applicable) must pass.
+4.  **Linting & Formatting:** Your code must adhere to our Biome configuration.
+5.  **Documentation:** Update any relevant documentation (e.g., JSDoc, comments, README) for your changes.
+6.  **Review Readiness:** Mark your PR as "Ready for Review" once all checks pass and you believe it's complete.
 
-If you discover a potential vulnerability, **DO NOT** open a public issue or PR. Please report it privately according to the procedures outlined in our [Security Policy](SECURITY.md).
+## Architectural Principles
 
----
-## 5. Resources
+This project adheres to the following core architectural principles:
 
-| Resource | Link |
-| :--- | :--- |
-| **Continuous Integration Status** | [Build Status](https://github.com/chirag127/ContentFetch-AI-Content-Downloader-MCP-Server/actions/workflows/ci.yml) |
-| **Issue Tracker** | [Open Issues](https://github.com/chirag127/ContentFetch-AI-Content-Downloader-MCP-Server/issues) |
-| **Security Policy** | [.github/SECURITY.md](https://github.com/chirag127/ContentFetch-AI-Content-Downloader-MCP-Server/blob/main/.github/SECURITY.md) |
+*   **Hexagonal Architecture (Ports & Adapters):** Promotes a clean separation between the core domain logic and external concerns (databases, APIs, UI). This enhances testability and maintainability.
+*   **SOLID Principles:**
+    *   **S**ingle Responsibility Principle
+    *   **O**pen/Closed Principle
+    *   **L**iskov Substitution Principle
+    *   **I**nterface Segregation Principle
+    *   **D**ependency Inversion Principle
+*   **DRY (Don't Repeat Yourself):** Avoid redundant code by promoting reusable abstractions.
+*   **YAGNI (You Aren't Gonna Need It):** Implement only features that are currently required, avoiding over-engineering.
+
+## Security Vulnerabilities
+
+If you discover a security vulnerability, please report it responsibly by following our [Security Policy](https://github.com/chirag127/AgentData-WebContent-Ingestion-Service-NodeJS/blob/main/.github/SECURITY.md). Do not open a public issue.
+
+## License
+
+By contributing to `AgentData-WebContent-Ingestion-Service-NodeJS`, you agree that your contributions will be licensed under its [CC BY-NC 4.0 License](https://github.com/chirag127/AgentData-WebContent-Ingestion-Service-NodeJS/blob/main/LICENSE).
