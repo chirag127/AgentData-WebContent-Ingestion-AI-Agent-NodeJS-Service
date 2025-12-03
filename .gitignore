@@ -1,44 +1,46 @@
-# Node.js specific files
+# Node.js
 
-# Dependency directories
 node_modules/
-
-# Build output directories
-dist/
-build/
-
-# Logs and temporary files
-*.log
-*.tmp
-.cache/
-
-# IDE and Editor specific files
-.vscode/
-.idea/
-*.swp
-
-# TypeScript compilation artifacts
-*.js
-*.jsx
-*.ts
-*.tsx
-*.d.ts
-tsconfig.tsbuildinfo
-
-# Environment files
-.env
-.env.*
-
-# Testing and Coverage
-coverage/
-.nyc_output/
-
-# Package manager lock files (Use uv/npm as primary standard, but keep lock files ignored if using npm for legacy or specific installs)
 npm-debug.log*
+yarn-debug.log*
 yarn-error.log*
 
-# Vite build output
-/dist
+# Build output
+dist/
+.svelte-kit/
+.vercel/
+.netlify/
 
-# Biome Cache
-.biome/
+# IDE settings
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Log files
+*.log
+
+# dotenv environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Miscellaneous
+# Ignore any generated files in the .github/workflows directory
+.github/workflows/*.generated.yml
+
+# Ignore Vite build artifacts
+.vite/
+
+# Ignore Tauri build artifacts
+.tauri/
+src-tauri/target/
+
+# Ignore Playwright cache
+.playwright/
