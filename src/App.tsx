@@ -1,84 +1,157 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { AIService, ApiKeys, ChatMessage } from './services/AIService';
+
+// A simple key icon component for visual flair
+const KeyIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 inline-block text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v-2l1-1 1-1-1.257-1.257A6 6 0 1118 8zm-6-4a4 4 0 100 8 4 4 0 000-8z" clipRule="evenodd" />
+  </svg>
+);
+
+// A simple loading spinner
+const LoadingSpinner = () => (
+  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white/50"></div>
+);
 
 function App() {
-  const [url, setUrl] = useState('');
-  const [status, setStatus] = useState('');
+  const [apiKeys, setApiKeys] = useState<ApiKeys>({
+    cerebras: '', gemini: '', deepseek: '', openrouter: '', mistral: '', together: '', groq: '',
+  });
+  const [prompt, setPrompt] = useState('');
+  const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [currentProvider, setCurrentProvider] = useState('');
 
-  const handleFetchAndDownload = async () => {
-    if (!url) {
-      setStatus('Please enter a URL.');
+  // Load API keys from localStorage on initial render
+  useEffect(() => {
+    const savedKeys = localStorage.getItem('ai-api-keys');
+    if (savedKeys) {
+      setApiKeys(JSON.parse(savedKeys));
+    }
+  }, []);
+
+  const handleSaveApiKeys = () => {
+    localStorage.setItem('ai-api-keys', JSON.stringify(apiKeys));
+    alert('API Keys saved successfully!');
+  };
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setApiKeys(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim() || Object.values(apiKeys).every(key => !key.trim())) {
+      setError('Please enter a prompt and at least one API key.');
       return;
     }
 
     setIsLoading(true);
-    setStatus(`Fetching content from ${url}...`);
+    setResponse('');
+    setError('');
+    setCurrentProvider('Initializing...');
+
+    const aiService = new AIService(apiKeys);
+    const messages: ChatMessage[] = [{ role: 'user', content: prompt }];
 
     try {
-      // Use a CORS proxy for cross-origin requests
-      const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-      const response = await fetch(proxyUrl + url);
-
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
-
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objectUrl;
-
-      // Extract filename from URL or default to 'download'
-      const filename = url.substring(url.lastIndexOf('/') + 1) || 'download';
-      a.download = filename;
-
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(objectUrl);
-
-      setStatus(`Successfully downloaded content from ${url}.`);
-    } catch (error) {
-      console.error('Fetch error:', error);
-      setStatus(`Failed to fetch content. ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const result = await aiService.chat(messages);
+      setResponse(result.content);
+      setCurrentProvider(result.provider);
+    } catch (err: any) {
+      setError(err.message || 'An unknown error occurred.');
+      setResponse('');
+      setCurrentProvider('Failed');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-2xl p-8 space-y-6 bg-gray-800 rounded-lg shadow-lg">
-        <h1 className="text-4xl font-bold text-center text-cyan-400">
-          Web Content Ingestion Agent
-        </h1>
-        <p className="text-center text-gray-400">
-          Enter a URL to fetch its content directly in your browser and download it.
-        </p>
+    <div className="min-h-screen bg-gray-900 text-white font-sans p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-8 text-center">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight">Spatial-Adaptive AI Interface</h1>
+          <p className="text-gray-400 mt-2">Powered by a Multi-Provider AI Service (AGENTS.md §3 Compliant)</p>
+        </header>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com"
-            className="flex-grow p-3 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-            disabled={isLoading}
-          />
-          <button
-            onClick={handleFetchAndDownload}
-            disabled={isLoading}
-            className="px-6 py-3 font-semibold text-white bg-cyan-600 rounded-md hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-cyan-500 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all duration-200"
-          >
-            {isLoading ? 'Fetching...' : 'Fetch & Download'}
-          </button>
-        </div>
+        {/* Bento Grid Layout */}
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {status && (
-          <p className="text-center text-gray-300 pt-4">
-            {status}
-          </p>
-        )}
+          {/* API Keys Management Card (Spans 1 column on large screens) */}
+          <div className="lg:col-span-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+            <h2 className="text-2xl font-semibold mb-4 flex items-center"><KeyIcon /> API Keys</h2>
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+              {Object.keys(apiKeys).map((key) => (
+                <div key={key}>
+                  <label htmlFor={key} className="block text-sm font-medium text-gray-300 capitalize">{key}</label>
+                  <input
+                    type="password"
+                    id={key}
+                    name={key}
+                    value={apiKeys[key as keyof ApiKeys]}
+                    onChange={handleApiKeyChange}
+                    className="mt-1 block w-full bg-white/10 border border-white/20 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder={`Enter ${key} API Key`}
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleSaveApiKeys}
+              className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300"
+            >
+              Save Keys
+            </button>
+          </div>
+
+          {/* Chat and Response Area (Spans 2 columns on large screens) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Prompt Input Card */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+              <form onSubmit={handleSubmit}>
+                <label htmlFor="prompt" className="block text-lg font-semibold text-gray-200">Enter your request</label>
+                <textarea
+                  id="prompt"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="mt-2 block w-full h-28 bg-white/10 border border-white/20 rounded-md shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="e.g., Explain the theory of relativity in simple terms..."
+                  disabled={isLoading}
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500 flex items-center justify-center"
+                >
+                  {isLoading ? 'Processing...' : 'Generate Response'}
+                </button>
+              </form>
+            </div>
+
+            {/* Response Display Card */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 min-h-[20rem]">
+              <h3 className="text-lg font-semibold text-gray-200 mb-2">AI Response</h3>
+              <div className="p-1 rounded-md bg-white/5 text-xs text-gray-300 inline-block mb-4">
+                Provider Status: <span className="font-mono text-cyan-400">{currentProvider || 'Idle'}</span>
+              </div>
+
+              {isLoading && (
+                <div className="flex justify-center items-center h-48">
+                  <LoadingSpinner />
+                </div>
+              )}
+
+              {error && <div className="text-red-400 bg-red-900/50 p-3 rounded-lg">{error}</div>}
+
+              {response && (
+                <div className="prose prose-invert max-w-none text-gray-300 whitespace-pre-wrap">{response}</div>
+              )}
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );
