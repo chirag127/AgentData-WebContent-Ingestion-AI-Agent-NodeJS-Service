@@ -8,11 +8,10 @@ import { AIService, ApiKeys, ChatMessage } from '../src/services/AIService';
 const mockApiKeys: ApiKeys = {
   cerebras: 'test-cerebras-key',
   gemini: 'test-gemini-key',
-  deepseek: 'test-deepseek-key',
-  openrouter: 'test-openrouter-key',
-  mistral: 'test-mistral-key',
-  together: 'test-together-key',
   groq: 'test-groq-key',
+  mistral: 'test-mistral-key',
+  nvidia: 'test-nvidia-key',
+  cloudflare: 'test-cloudflare-account-id',
 };
 
 // Mock server handlers
@@ -25,15 +24,36 @@ const handlers = [
   }),
 
   // Google Gemini - Mock Success
-  http.post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent', async () => {
+  http.post('https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-instruct:generateContent', async () => {
     return HttpResponse.json({
       candidates: [{ content: { parts: [{ text: 'Response from Gemini' }] } }],
     });
   }),
 
-  // DeepSeek - Mock Failure (e.g., rate limit)
-  http.post('https://api.deepseek.com/v1/chat/completions', async () => {
+  // Groq - Mock Success
+  http.post('https://api.groq.com/openai/v1/chat/completions', async () => {
+    return HttpResponse.json({
+      choices: [{ message: { content: 'Response from Groq' } }],
+    });
+  }),
+
+  // Mistral - Mock Success
+  http.post('https://api.mistral.ai/v1/chat/completions', async () => {
+    return HttpResponse.json({
+      choices: [{ message: { content: 'Response from Mistral' } }],
+    });
+  }),
+
+  // NVIDIA - Mock Failure (e.g., rate limit) to test fallback
+  http.post('https://integrate.api.nvidia.com/v1/chat/completions', async () => {
     return new HttpResponse(null, { status: 429 });
+  }),
+
+  // Cloudflare - Mock Success
+  http.post('https://api.cloudflare.com/client/v4/accounts/:accountId/ai/run/@cf/meta/llama-3.1-405b-instruct', async () => {
+    return HttpResponse.json({
+      choices: [{ message: { content: 'Response from Cloudflare' } }],
+    });
   }),
 ];
 
@@ -69,26 +89,39 @@ describe('AIService', () => {
   });
 
   it('should skip providers with missing API keys', async () => {
-    const incompleteKeys: ApiKeys = { ...mockApiKeys, cerebras: '' };
+    const incompleteKeys: ApiKeys = { ...mockApiKeys, cerebras: '', gemini: '' };
     const aiService = new AIService(incompleteKeys);
 
     const result = await aiService.chat(messages);
-    expect(result.provider).toBe('gemini'); // Should skip Cerebras and go to Gemini
+    expect(result.provider).toBe('groq'); // Should skip Cerebras and Gemini, and go to Groq
+  });
+
+  it('should fall back through the entire chain until a successful response', async () => {
+    // Override handlers to fail Cerebras, Gemini, and Groq
+    server.use(
+      http.post('https://api.cerebras.ai/v1/chat/completions', () => new HttpResponse(null, { status: 500 })),
+      http.post('https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-instruct:generateContent', () => new HttpResponse(null, { status: 500 })),
+      http.post('https://api.groq.com/openai/v1/chat/completions', () => new HttpResponse(null, { status: 500 }))
+    );
+
+    const aiService = new AIService(mockApiKeys);
+    const result = await aiService.chat(messages);
+    expect(result.provider).toBe('mistral');
+    expect(result.content).toBe('Response from Mistral');
   });
 
   it('should throw an error if all providers fail', async () => {
     // Override all handlers to simulate failures
     server.use(
       http.post('https://api.cerebras.ai/v1/chat/completions', () => new HttpResponse(null, { status: 500 })),
-      http.post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent', () => new HttpResponse(null, { status: 500 })),
-      http.post('https://api.deepseek.com/v1/chat/completions', () => new HttpResponse(null, { status: 500 })),
-      http.post('https://openrouter.ai/api/v1/chat/completions', () => new HttpResponse(null, { status: 500 })),
+      http.post('https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-instruct:generateContent', () => new HttpResponse(null, { status: 500 })),
+      http.post('https://api.groq.com/openai/v1/chat/completions', () => new HttpResponse(null, { status: 500 })),
       http.post('https://api.mistral.ai/v1/chat/completions', () => new HttpResponse(null, { status: 500 })),
-      http.post('https://api.together.xyz/v1/chat/completions', () => new HttpResponse(null, { status: 500 })),
-      http.post('https://api.groq.com/openai/v1/chat/completions', () => new HttpResponse(null, { status: 500 }))
+      http.post('https://integrate.api.nvidia.com/v1/chat/completions', () => new HttpResponse(null, { status: 500 })),
+      http.post('https://api.cloudflare.com/client/v4/accounts/:accountId/ai/run/@cf/meta/llama-3.1-405b-instruct', () => new HttpResponse(null, { status: 500 }))
     );
 
     const aiService = new AIService(mockApiKeys);
-    await expect(aiService.chat(messages)).rejects.toThrow('All AI providers failed.');
+    await expect(aiService.chat(messages)).rejects.toThrow('All AI providers failed. Please check your API keys and network connection.');
   });
 });

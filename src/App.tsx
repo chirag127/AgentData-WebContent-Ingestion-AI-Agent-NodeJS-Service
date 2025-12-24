@@ -15,7 +15,7 @@ const LoadingSpinner = () => (
 
 function App() {
   const [apiKeys, setApiKeys] = useState<ApiKeys>({
-    cerebras: '', gemini: '', deepseek: '', openrouter: '', mistral: '', together: '', groq: '',
+    cerebras: '', gemini: '', groq: '', mistral: '', nvidia: '', cloudflare: '',
   });
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
@@ -94,8 +94,13 @@ function App() {
                     value={apiKeys[key as keyof ApiKeys]}
                     onChange={handleApiKeyChange}
                     className="mt-1 block w-full bg-white/10 border border-white/20 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder={`Enter ${key} API Key`}
+                    placeholder={key === 'cloudflare' ? 'Enter Cloudflare Account ID' : `Enter ${key} API Key`}
                   />
+                  {key === 'cloudflare' && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Use your Cloudflare Account ID as the API Key. The service will also require an API token with Workers AI permissions.
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

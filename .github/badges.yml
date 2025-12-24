@@ -1,0 +1,29 @@
+# .github/badges.yml
+# AGENTS.md §5 Compliant - Badges for Hero-Tier README.md
+
+version: 1.0
+
+badges:
+  - name: "Built With"
+    shield: "https://img.shields.io/badge/Built%20With-Vite%20%26%20TypeScript-blueviolet?style=for-the-badge&logo=typescript"
+    url: "https://vitejs.dev"
+
+  - name: "UI Framework"
+    shield: "https://img.shields.io/badge/UI-React%20%26%20Tailwind-blue?style=for-the-badge&logo=react"
+    url: "https://react.dev"
+
+  - name: "Architecture"
+    shield: "https://img.shields.io/badge/Architecture-Frontend--Only-orange?style=for-the-badge"
+    url: "./AGENTS.md#2-frontend-only-architecture-critical-mandate"
+
+  - name: "AI Providers"
+    shield: "https://img.shields.io/badge/AI-Multi--Provider-brightgreen?style=for-the-badge&logo=openai"
+    url: "./AGENTS.md#3-ai-orchestration--multi-provider-protocol-mandatory"
+
+  - name: "License"
+    shield: "https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey?style=for-the-badge"
+    url: "./LICENSE"
+
+  - name: "CI/CD"
+    shield: "https://img.shields.io/github/actions/workflow/status/chirag127/AgentData-WebContent-Ingestion-AI-Agent-NodeJS-Service/ci.yml?branch=main&style=for-the-badge&logo=githubactions"
+    url: "./.github/workflows/ci.yml"
