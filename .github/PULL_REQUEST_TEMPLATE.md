@@ -1,20 +1,27 @@
 ---
 name: Pull Request
 about: Propose a change to the codebase
-title: ''
-labels: ''
+title: 'feat: A brief description of the feature'
+labels: 'enhancement, needs-review'
 assignees: ''
 
 ---
 
-**Description**
-A clear and concise description of the changes being proposed.
+### Description
 
-**Related Issue**
-Please link to the issue that this PR addresses.
+A clear and concise description of the changes being proposed in this pull request.
 
-**Checklist**
-- [ ] I have read the [CONTRIBUTING.md](.github/CONTRIBUTING.md) document.
-- [ ] My code follows the code style of this project.
-- [ ] I have added tests to cover my changes.
-- [ ] All new and existing tests passed.
+### Related Issue
+
+Please link to the GitHub issue that this pull request addresses.
+-   Fixes #<issue_number>
+
+### Checklist
+
+-   [ ] I have read and understood the contribution guidelines in `CONTRIBUTING.md`.
+-   [ ] My changes are fully compliant with the architectural principles in `AGENTS.md`.
+-   [ ] I have written or updated tests to cover my changes.
+-   [ ] All existing and new tests pass successfully (`npm test`).
+-   [ ] My code is free of linting errors (`npm run lint`).
+-   [ ] I have updated the `README.md` and any other relevant documentation.
+-   [ ] If my changes affect the AI service, I have added or updated mock API handlers in `tests/AIService.test.ts`.

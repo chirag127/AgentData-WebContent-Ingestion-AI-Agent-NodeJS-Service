@@ -4,11 +4,10 @@
 export interface ApiKeys {
   cerebras: string;
   gemini: string;
-  deepseek: string;
-  openrouter: string;
-  mistral: string;
-  together: string;
   groq: string;
+  mistral: string;
+  nvidia: string;
+  cloudflare: string;
 }
 
 export interface ChatMessage {
@@ -22,59 +21,52 @@ const PROVIDER_CONFIG = {
   cerebras: {
     baseURL: 'https://api.cerebras.ai/v1',
     endpoint: '/chat/completions',
-    model: 'llama-3.1-70b-chat',
+    model: 'qwen-3-235b-a22b-instruct-2507',
     type: 'openai-compatible',
   },
   gemini: {
     baseURL: 'https://generativelanguage.googleapis.com/v1beta',
-    endpoint: '/models/gemini-2.5-flash-lite:generateContent',
-    model: 'gemini-2.5-flash-lite', // Add model for type consistency
+    endpoint: '/models/gemma-3-27b-instruct:generateContent',
+    model: 'gemma-3-27b-instruct',
     type: 'gemini-native',
   },
-  deepseek: {
-    baseURL: 'https://api.deepseek.com/v1',
+  groq: {
+    baseURL: 'https://api.groq.com/openai/v1',
     endpoint: '/chat/completions',
-    model: 'deepseek-r1-0528',
-    type: 'openai-compatible',
-  },
-  openrouter: {
-    baseURL: 'https://openrouter.ai/api/v1',
-    endpoint: '/chat/completions',
-    model: 'deepseek/deepseek-r1',
+    model: 'llama-3.1-405b-instruct',
     type: 'openai-compatible',
   },
   mistral: {
     baseURL: 'https://api.mistral.ai/v1',
     endpoint: '/chat/completions',
-    model: 'mistral-large-3',
+    model: 'mistral-large',
     type: 'openai-compatible',
   },
-  together: {
-    baseURL: 'https://api.together.xyz/v1',
+  nvidia: {
+    baseURL: 'https://integrate.api.nvidia.com/v1',
     endpoint: '/chat/completions',
-    model: 'meta-llama/Llama-3.1-70b-instruct',
+    model: 'meta-llama/llama-3.1-405b-instruct',
     type: 'openai-compatible',
   },
-  groq: {
-    baseURL: 'https://api.groq.com/openai/v1',
-    endpoint: '/chat/completions',
-    model: 'llama-3.1-70b-versatile',
-    type: 'openai-compatible',
+  cloudflare: {
+    baseURL: 'https://api.cloudflare.com/client/v4/accounts/ID/ai/run',
+    endpoint: '/@cf/meta/llama-3.1-405b-instruct', // NOTE: Endpoint is part of the path in CF
+    model: '@cf/meta/llama-3.1-405b-instruct',
+    type: 'openai-compatible-cf', // Special type for Cloudflare's unique URL structure
   },
 };
 
 const PROVIDER_CASCADE_ORDER: Provider[] = [
   'cerebras',
   'gemini',
-  'deepseek',
-  'openrouter',
-  'mistral',
-  'together',
   'groq',
+  'mistral',
+  'nvidia',
+  'cloudflare',
 ];
 
-const MAX_RETRIES = 3;
-const INITIAL_BACKOFF_MS = 2000;
+const MAX_RETRIES = 5; // Allows for backoff up to 16s, approaching 32s max
+const INITIAL_BACKOFF_MS = 1000;
 
 export class AIService {
   private apiKeys: ApiKeys;
@@ -139,14 +131,20 @@ export class AIService {
     let body: any;
     let headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
-    if (config.type === 'openai-compatible') {
-        headers['Authorization'] = `Bearer ${apiKey}`;
-        body = {
-            model: config.model,
-            messages,
-            max_tokens: 32768,
-            temperature: 0.7,
-        };
+    if (config.type === 'openai-compatible' || config.type === 'openai-compatible-cf') {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+      body = {
+        model: config.model,
+        messages,
+        max_tokens: 32768,
+        temperature: 0.7,
+      };
+      if (config.type === 'openai-compatible-cf') {
+        // Cloudflare requires the account ID in the URL, which we'll have to get from the user.
+        // For now, we'll use a placeholder and expect the user to replace it.
+        // We'll also use the API key as the account ID for simplicity.
+        url = url.replace('ID', apiKey);
+      }
     } else if (config.type === 'gemini-native') {
         url += `?key=${apiKey}`;
         // Gemini expects a different message format.
@@ -184,11 +182,11 @@ export class AIService {
     const config = PROVIDER_CONFIG[provider];
 
     try {
-        if (config.type === 'openai-compatible') {
-            return response.choices[0]?.message?.content || '';
-        } else if (config.type === 'gemini-native') {
-            return response.candidates[0]?.content?.parts[0]?.text || '';
-        }
+      if (config.type === 'openai-compatible' || config.type === 'openai-compatible-cf') {
+        return response.choices[0]?.message?.content || '';
+      } else if (config.type === 'gemini-native') {
+        return response.candidates[0]?.content?.parts[0]?.text || '';
+      }
     } catch (e) {
         console.error(`Failed to parse response from ${provider}:`, response);
         throw new Error(`Could not parse response from ${provider}.`);
