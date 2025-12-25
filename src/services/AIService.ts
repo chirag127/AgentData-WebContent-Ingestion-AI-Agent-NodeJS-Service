@@ -7,7 +7,7 @@ export interface ApiKeys {
   groq: string;
   mistral: string;
   nvidia: string;
-  cloudflare: string;
+  cloudflare: string; // Expected format: "ACCOUNT_ID/API_TOKEN"
 }
 
 export interface ChatMessage {
@@ -43,16 +43,16 @@ const PROVIDER_CONFIG = {
     type: 'openai-compatible',
   },
   nvidia: {
-    baseURL: 'https://integrate.api.nvidia.com/v1',
-    endpoint: '/chat/completions',
+    baseURL: 'https://api.nvidia.com/nim',
+    endpoint: '/v1/chat/completions',
     model: 'meta-llama/llama-3.1-405b-instruct',
     type: 'openai-compatible',
   },
   cloudflare: {
     baseURL: 'https://api.cloudflare.com/client/v4/accounts/ID/ai/run',
-    endpoint: '/@cf/meta/llama-3.1-405b-instruct', // NOTE: Endpoint is part of the path in CF
+    endpoint: '/@cf/meta/llama-3.1-405b-instruct',
     model: '@cf/meta/llama-3.1-405b-instruct',
-    type: 'openai-compatible-cf', // Special type for Cloudflare's unique URL structure
+    type: 'cloudflare-native',
   },
 };
 
@@ -65,7 +65,7 @@ const PROVIDER_CASCADE_ORDER: Provider[] = [
   'cloudflare',
 ];
 
-const MAX_RETRIES = 5; // Allows for backoff up to 16s, approaching 32s max
+const MAX_RETRIES = 5;
 const INITIAL_BACKOFF_MS = 1000;
 
 export class AIService {
@@ -113,7 +113,6 @@ export class AIService {
           console.warn(`Provider ${provider} returned status ${error.status}. Retrying in ${delay.toFixed(0)}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
-          // Don't retry for client-side errors like 400 or 401
           throw error;
         }
       }
@@ -130,24 +129,30 @@ export class AIService {
     let url = `${config.baseURL}${config.endpoint}`;
     let body: any;
     let headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    let effectiveApiKey = apiKey;
 
-    if (config.type === 'openai-compatible' || config.type === 'openai-compatible-cf') {
-      headers['Authorization'] = `Bearer ${apiKey}`;
-      body = {
-        model: config.model,
-        messages,
-        max_tokens: 32768,
-        temperature: 0.7,
-      };
-      if (config.type === 'openai-compatible-cf') {
-        // Cloudflare requires the account ID in the URL, which we'll have to get from the user.
-        // For now, we'll use a placeholder and expect the user to replace it.
-        // We'll also use the API key as the account ID for simplicity.
-        url = url.replace('ID', apiKey);
-      }
+    if (config.type === 'openai-compatible') {
+        headers['Authorization'] = `Bearer ${effectiveApiKey}`;
+        body = {
+            model: config.model,
+            messages,
+            max_tokens: 32768,
+            temperature: 0.7,
+        };
+    } else if (config.type === 'cloudflare-native') {
+        const parts = apiKey.split('/');
+        if (parts.length !== 2) {
+            throw new Error('Invalid Cloudflare API key format. Expected "ACCOUNT_ID/API_TOKEN".');
+        }
+        const [accountId, apiToken] = parts;
+        url = config.baseURL.replace('ID', accountId) + config.endpoint;
+        effectiveApiKey = apiToken;
+        headers['Authorization'] = `Bearer ${effectiveApiKey}`;
+        body = {
+            messages
+        };
     } else if (config.type === 'gemini-native') {
         url += `?key=${apiKey}`;
-        // Gemini expects a different message format.
         const geminiMessages = messages.map(m => ({
             role: m.role === 'assistant' ? 'model' : m.role,
             parts: [{ text: m.content }],
@@ -176,14 +181,16 @@ export class AIService {
     }
 
     return response.json();
-}
+  }
 
   private parseResponse(provider: Provider, response: any): string {
     const config = PROVIDER_CONFIG[provider];
 
     try {
-      if (config.type === 'openai-compatible' || config.type === 'openai-compatible-cf') {
+      if (config.type === 'openai-compatible') {
         return response.choices[0]?.message?.content || '';
+      } else if (config.type === 'cloudflare-native') {
+        return response.result?.response || '';
       } else if (config.type === 'gemini-native') {
         return response.candidates[0]?.content?.parts[0]?.text || '';
       }
